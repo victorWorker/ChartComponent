@@ -1,0 +1,63 @@
+Chart Requirements:
+
+1) Chart must be created using Vuejs and easily maintainable as well as being easily configurable.
+2) Chart must be capable of rendering multiple metrics (Known as Series or Plots)
+3) Chart component will recieve the metrics data through the vuejs data() or props methods, The component will watch for changes because the end user can add / remove metrics to the chart dynamically (Example below)
+4) Add more metrics to the chart by this.series.push() in the parent component
+5) Remove metric from chart using the metric.id   [ Example:   removeMetric('btc_price') ]
+6) For each metric on chart, render <button> above chart to configure series settings  (See screenshot)
+7) Chart component will use settings from the api data for each series or revert to default settings if data.settings is null  (Example:   color:  settings.color ? settings.color : '#dddd' )
+
+
+Example parent component:
+
+<template>
+    <div>
+        <Chart :series="series" />
+    </div>
+</template>
+
+<script>
+    export default {
+        data() {
+            return {
+                series: []
+            }
+        },
+        methods: {
+            addMetric() {
+                var metricUrl = "/metrics/btc_price";
+                var fetchMetricData = fetch(metricUrl).then(res => res.json());
+                Promise.all([fetchMetricData]).then(([metricData]) => {
+                    this.series.push(metricData)
+                });
+            }
+        }
+    }
+</script>
+
+
+
+
+
+Example api response for metric:
+{
+  "id": "btc_price",
+  "name": "BTC Price (USD)",
+  "settings": {
+    "type": "line",
+    "color": "#333",
+    "axis": true
+  },
+  "metrics": [
+    {
+      "date": "2010-07-17 00:00:00",
+      "value": 0.5
+    },
+    {
+      "date": "2010-07-18 00:00:00",
+      "value": 0.84
+    }
+  ]
+}
+

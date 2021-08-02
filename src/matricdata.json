@@ -1,0 +1,19 @@
+{
+    "id": "btc_price",
+    "name": "BTC Price (USD)",
+    "settings": {
+      "type": "line",
+      "color": "#333",
+      "axis": true
+    },
+    "metrics": [
+      {
+        "date": "2010-07-17 00:00:00",
+        "value": 0.5
+      },
+      {
+        "date": "2010-07-18 00:00:00",
+        "value": 0.84
+      }
+    ]
+  }
