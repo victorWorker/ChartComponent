@@ -5,7 +5,7 @@
     <Echarts />
     <button @click="addMetric">Add data</button>
     <Ownchart :seriesData="series"/>
-    <Nativechart />
+    <!-- <Nativechart /> -->
   </div>
 </template>
 
@@ -15,7 +15,7 @@
 // import Dygraphschart from './components/Dygraphschart.vue';
 import Echarts from './components/Echarts.vue';
 import Ownchart from './components/Ownchart.vue';
-import Nativechart from './components/Nativechart.vue';
+// import Nativechart from './components/Nativechart.vue';
 
 import firstdata from './firstdate.json';
 import adddata from './adddate.json';
@@ -25,25 +25,27 @@ export default {
   components: {
     Echarts,
     Ownchart,
-    Nativechart,
+    // Nativechart,
   },
   date() {
     return {
       onable: true,
-      series: []
+      series: firstdata
     }
   },
   computed: {
     series() {
-      let datas = [];
-      datas.push(firstdata.metrics);
-      return datas;
+      // if(this.series.length < 1){
+        // alert('adddata');
+        let datas = [];
+        datas.push(firstdata);
+        return datas;
+      // }
     }
   },
-  // mounted() {
-  //   console.log(firstdata.metrics);
-  //   this.series.push(firstdata.metrics);
-  // },
+  mounted() {
+    
+  },
   methods: {
     addMetric(){
       // let metricdata = [];
@@ -54,7 +56,7 @@ export default {
       // const addData = {
       //   values: metricdata
       // }
-      this.series.push(adddata.metrics);
+      this.series.push(adddata);
       console.log(this.series);
       // this.$root.$emit('reload');
     }

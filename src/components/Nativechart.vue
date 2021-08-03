@@ -167,7 +167,7 @@ export default {
                     }
                 ],
                 series: [
-                    {
+                  {
                       Name: 'day K',
                       type: 'candlestick',
                       data: data0.values,
