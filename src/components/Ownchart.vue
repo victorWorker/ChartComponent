@@ -3,10 +3,10 @@
     <div class="buttonBar">
       <span class="seriesButton" v-for="serie in ownseries" :key="serie.id" @click="setSerie(serie.id)">
         {{serie.name}}
-        <v-icon name="more-vertical"></v-icon>
+        <!-- <v-icon name="more-vertical"></v-icon>
         <span @click="closeSerie(serie.name)">
           <v-icon name="x"></v-icon>
-        </span>
+        </span> -->
       </span>
     </div>
     <div class="tabBar">
@@ -20,7 +20,7 @@
         </select>
       </span>
       <span class="controllSpan">
-        <input type="color" class="selectLayerColor" v-model="setSeriedHead.color" @change="changeColor($event)">
+        <input type="color" class="selectLayerColor" v-model="setSeriedHead.color" @change="changeColor($event)" >
       </span>
       <span class="controllSpan">
         <Label for="interval" >Interval:</Label>
@@ -35,7 +35,7 @@
         <input id="axis" class="selectShowAxis" type="checkbox" v-model="setSeriedHead.showAxis" @change="changeAxis($event)" checked=ture>
       </span>
     </div>
-    <e-charts autoresize :options="options" theme="ovilia-green" auto-resize />
+    <e-charts ref="chartmap" autoresize :options="options" theme="ovilia-green" auto-resize />
   </div>
 </template>
 
@@ -64,6 +64,7 @@ export default {
     ECharts
   },
   data() {
+    // this.$refs.chartmap.echarts.registerMap('map', {svg: 'eeeee'});
     return {
       options: {
         tooltip: {
@@ -84,8 +85,24 @@ export default {
             saveAsImage: {}
           }
         },
+        visualMap: {
+          show: true,
+          inRange: {
+              color: ['#d94e5d','#eac736','#50a3ba']
+          },
+          outOfRange: {
+              color: ['#ccc'] //['#d94e5d','#eac736','#50a3ba']
+          },
+          top: 20,
+          textStyle: {
+              color: '#fff'
+          },
+          realtime: false
+        },
+        calculable: true,
         legend: {
           data: [],
+          itemGap: 5,
         },
         xAxis: {
           type: 'category',
@@ -93,7 +110,7 @@ export default {
           scale: true,
           boundaryGap : false,
           axisLine: {onZero: false},
-          splitLine: {show: false},
+          splitLine: {show: true},
           splitNumber: 100,
           min: 'dataMin',
           max: 'dataMax'
@@ -104,6 +121,7 @@ export default {
           right: '10%',
           bottom: '15%',
           containLabel: true,
+          backgroundColor: '#333',
         },
         dataZoom: [
           {
@@ -160,7 +178,14 @@ export default {
     this.setSeriedHead.lineStyle = this.ownseries[0].settings.type;
     this.setSeriedHead.showAxis = this.ownseries[0].settings.axis;
     this.setSeriedHead.color = this.ownseries[0].settings.color;
-
+    console.log('test', this.setSeriedHead);
+  },
+  created(){
+    this.setSeriedHead.id = this.ownseries[0].id;
+    this.setSeriedHead.name = this.ownseries[0].name;
+    this.setSeriedHead.lineStyle = this.ownseries[0].settings.type;
+    this.setSeriedHead.showAxis = this.ownseries[0].settings.axis;
+    this.setSeriedHead.color = this.ownseries[0].settings.color;
   },
   methods: {
     changeColor(event){
@@ -223,13 +248,14 @@ export default {
     },
     getdates() {
       return this.ownseries[0].metrics.map((dataitem)=>{
-        return dataitem.name;
+        // new Date(dataitem.t);
+        return new Date(dataitem.t).toLocaleDateString();
       })
     },
     getYaxis(){
       const yAxisData = [];
       this.ownseries.map((item, index) => {
-        console.log(Math.max.apply(Math, item.metrics.map((o)=>{return o.value})))
+        console.log(Math.max.apply(Math, item.metrics.map((o)=>{return o.v})))
         yAxisData.push({
           type: 'value',
           show: true,
@@ -258,56 +284,94 @@ export default {
       self.legendData = [];
       return this.ownseries.map(function (item, index) {
         let datelist = item.metrics.map((dataitem)=>{
-          return dataitem.value;
+          return dataitem.v;
         })
         self.legendData.push(item.name);
-        if(item.settings.type == "area"){
-          return {
-            type: 'line',
-            areaStyle: {
-              opacity: 0.65,
-            },
-            name: item.name,
-            yAxisIndex: index,
-            showSymbol: false,
-            smooth: false,
-            itemStyle: {
-              color: item.settings.color
-            },
-            lineStyle: {
-              cap: 'round'
-            },
-            emphasis: {
-              focus: 'series'
-            },
-            dimentions: ['timestamp', 'name', 'value'],
-            encode: {
-              x: 'timestamp',
-              y: 'value'
-            },
-            data: datelist
-          };
-        }else{
-          return {
-            type: 'line',
-            areaStyle: {
-              opacity: 0,
-            },
-            name: item.name,
-            yAxisIndex: index,
-            showSymbol: true,
-            smooth: true,
-            itemStyle: {
-              color: item.settings.color
-            },
-            dimentions: ['timestamp', 'name', 'value'],
-            encode: {
-              x: 'timestamp',
-              y: 'value'
-            },
-            data: datelist
-          };
+        let returnvalue={};
+        switch(item.settings.type){
+          case 'area':
+            returnvalue = {
+              type: 'line',
+              areaStyle: {
+                opacity: 0.65,
+              },
+              name: item.name,
+              yAxisIndex: index,
+              showSymbol: false,
+              smooth: false,
+              itemStyle: {
+                color: item.settings.color
+              },
+              lineStyle: {
+                cap: 'round'
+              },
+              emphasis: {
+                focus: 'series'
+              },
+              dimentions: ['t', 'v'],
+              encode: {
+                x: 't',
+                y: 'v'
+              },
+              data: datelist
+            };
+            break;
+          case 'line':
+            returnvalue = {
+              type: 'line',
+              areaStyle: {
+                opacity: 0,
+              },
+              name: item.name,
+              yAxisIndex: index,
+              showSymbol: false,
+              smooth: false,
+              itemStyle: {
+                color: item.settings.color
+              },
+              lineStyle: {
+                cap: 'round'
+              },
+              emphasis: {
+                focus: 'series'
+              },
+              dimentions: ['t', 'v'],
+              encode: {
+                x: 't',
+                y: 'v'
+              },
+              data: datelist
+            };
+            break;
+          case 'bar':
+            returnvalue = {
+              type: 'bar',
+              areaStyle: {
+                opacity: 0.65,
+              },
+              name: item.name,
+              yAxisIndex: index,
+              showSymbol: false,
+              smooth: false,
+              itemStyle: {
+                color: item.settings.color
+              },
+              lineStyle: {
+                cap: 'round'
+              },
+              emphasis: {
+                focus: 'series'
+              },
+              dimentions: ['t', 'v'],
+              encode: {
+                x: 't',
+                y: 'v'
+              },
+              data: datelist
+            };
+            break;
         }
+        return returnvalue;
       })
     },
   },
