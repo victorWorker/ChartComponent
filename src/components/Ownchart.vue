@@ -1,28 +1,41 @@
 <template>
   <div class="Chart_content" style="width: 100%; height: 800px;">
     <div class="buttonBar">
-      <button v-for="serie in ownseries" :key="serie.id" @click="setSerie(serie.id)">{{serie.name}}</button>
+      <span class="seriesButton" v-for="serie in ownseries" :key="serie.id" @click="setSerie(serie.id)">
+        {{serie.name}}
+        <v-icon name="more-vertical"></v-icon>
+        <span @click="closeSerie(serie.name)">
+          <v-icon name="x"></v-icon>
+        </span>
+      </span>
     </div>
     <div class="tabBar">
       <span><b>{{setSeriedHead.name}} :</b></span>
-      <Label for="selectStyle">Style</Label>
-      <select id="selectStyle" v-model="setSeriedHead.lineStyle" @change="changeLineType($event)">
-        <option value="line">Line</option>
-        <option value="area">Area</option>
-        <option value="bar">Bars</option>
-      </select>
-      <input type="color" v-model="setSeriedHead.color" @change="changeColor($event)">
-      <Label for="interval" >Interval:</Label>
-      <select id="interval" v-model="intervalCall">
-        <option value="5">5 min</option>
-        <option value="10">10 hours</option>
-        <option value="24">1 day</option>
-      </select>
-      <Label for='axis'>Show axis</Label>
-      <input id="axis" type="checkbox" v-model="setSeriedHead.showAxis" @change="changeAxis($event)" checked=ture>
+      <span class="controllSpan">
+        <Label for="selectStyle">Style</Label>
+        <select id="selectStyle" class="selectStyle" v-model="setSeriedHead.lineStyle" @change="changeLineType($event)">
+          <option value="line">Line</option>
+          <option value="area">Area</option>
+          <option value="bar">Bars</option>
+        </select>
+      </span>
+      <span class="controllSpan">
+        <input type="color" class="selectLayerColor" v-model="setSeriedHead.color" @change="changeColor($event)">
+      </span>
+      <span class="controllSpan">
+        <Label for="interval" >Interval:</Label>
+        <select id="interval" class="selectInterval" v-model="intervalCall">
+          <option value="5">5 min</option>
+          <option value="10">10 hours</option>
+          <option value="24">1 day</option>
+        </select>
+      </span>
+      <span class="controllSpan">
+        <Label for='axis'>Show axis</Label>
+        <input id="axis" class="selectShowAxis" type="checkbox" v-model="setSeriedHead.showAxis" @change="changeAxis($event)" checked=ture>
+      </span>
     </div>
     <e-charts autoresize :options="options" theme="ovilia-green" auto-resize />
-    <button @click="updateDatas">updatecheck</button>
   </div>
 </template>
 
@@ -32,7 +45,6 @@ import ECharts from 'vue-echarts/components/ECharts'
 import 'echarts'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/grid'
-import 'echarts/lib/layout/barGrid'
 import 'echarts/lib/component/tooltip'
 import 'echarts/lib/component/legend'
 import 'echarts/lib/chart/line'
@@ -40,9 +52,6 @@ import 'echarts/lib/chart/bar'
 import 'echarts/lib/component/axisPointer'
 import 'echarts/lib/chart/map'
 import 'echarts/lib/echarts'
-// import theme from './theme.json'
-
-// ECharts.registerTheme('ovilia-green', theme)
 
 export default {
   props: {
@@ -59,6 +68,12 @@ export default {
       options: {
         tooltip: {
           trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#6a7985'
+            }
+          }
         },
         toolbox: {
           feature: {
@@ -68,6 +83,9 @@ export default {
             restore: {},
             saveAsImage: {}
           }
+        },
+        legend: {
+          data: [],
         },
         xAxis: {
           type: 'category',
@@ -80,11 +98,12 @@ export default {
           min: 'dataMin',
           max: 'dataMax'
         },
-        yAxis: [],
+        yAxis: [{}],
         grid: {
           left: '0%',
           right: '10%',
-          bottom: '15%'
+          bottom: '15%',
+          containLabel: true,
         },
         dataZoom: [
           {
@@ -104,8 +123,7 @@ export default {
         series: []
       },
       ownseries: this.seriesData,
-      yAxisData: [],
-      
+      legendData: [],
       setSeriedHead:{
         id: '',
         name: '',
@@ -122,8 +140,11 @@ export default {
   watch:{
     ownseries(value) {
       console.log(value);
+      console.log(this.getYaxis());
       this.options.yAxis = this.getYaxis();
       this.options.series = this.getseries();
+      this.options.legend.data = this.legendData;
+      console.log(this.options);
     }
   },
   mounted() {
@@ -133,6 +154,7 @@ export default {
     this.options.yAxis = this.getYaxis();
     this.options.xAxis.data = this.getdates();
     this.options.series = this.getseries();
+    this.options.legend.data = this.legendData;
     this.setSeriedHead.id = this.ownseries[0].id;
     this.setSeriedHead.name = this.ownseries[0].name;
     this.setSeriedHead.lineStyle = this.ownseries[0].settings.type;
@@ -143,25 +165,28 @@ export default {
   methods: {
     changeColor(event){
       let self = this;
-      console.log(event.target.value)
       this.options.series.filter((serie) => {
         if(serie.name === self.setSeriedHead.name){
           serie.itemStyle.color = event.target.value;
-          console.log(serie);
         }
       });
     },
     changeAxis(event){
-      console.log(event)
       let self = this;
-      // alert(this.setSeriedHead.showAxis);
+      console.log(event.target);
       this.options.yAxis.filter((item) => {
-        console.log(item)
         if(item.name === self.setSeriedHead.name){
           item.show = self.setSeriedHead.showAxis;
-          // console.log(serie);
         }
       });
+    },
+    closeSerie(id){
+      alert(id);
+      this.ownseries = this.ownseries.filter((serie) => {
+        if(serie.name == id){
+          return serie;
+        }
+      })
     },
     setSerie(id){
       this.ownseries.filter((serie)=>{
@@ -202,9 +227,10 @@ export default {
       })
     },
     getYaxis(){
+      const yAxisData = [];
       this.ownseries.map((item, index) => {
         console.log(Math.max.apply(Math, item.metrics.map((o)=>{return o.value})))
-        this.yAxisData.push({
+        yAxisData.push({
           type: 'value',
           show: true,
           name: item.name,
@@ -212,7 +238,7 @@ export default {
           max: 'dataMax',
           scale: true,
           position: 'right',
-          offset: 30 * index,
+          offset: 80 * index,
           axisLine: {
             show: true,
             lineStyle: {
@@ -220,68 +246,70 @@ export default {
             }
           },
           axisLabel: {
-            formatter: '{value}nt',
+            formatter: '{value}',
             color: item.settings.color
           }
         })
       })
-      return this.yAxisData;
+      return yAxisData;
     },
     getseries() {
+      let self = this;
+      self.legendData = [];
       return this.ownseries.map(function (item, index) {
-        console.log('wokr', item);
-          let datelist = item.metrics.map((dataitem)=>{
-            return dataitem.value;
-          })
-          if(item.settings.type == "area"){
-            return {
-              type: 'line',
-              areaStyle: {
-                opacity: 0.65,
-              },
-              name: item.name,
-              yAxisIndex: index,
-              showSymbol: false,
-              smooth: false,
-              itemStyle: {
-                color: item.settings.color
-              },
-              lineStyle: {
-                cap: 'round'
-              },
-              dimentions: ['timestamp', 'name', 'value'],
-              encode: {
-                x: 'timestamp',
-                y: 'value'
-              },
-              data: datelist
-            };
-          }else{
-            return {
-              type: 'line',
-              areaStyle: {
-                opacity: 0,
-              },
-              name: item.name,
-              yAxisIndex: index,
-              showSymbol: true,
-              smooth: true,
-              itemStyle: {
-                color: item.settings.color
-              },
-              dimentions: ['timestamp', 'name', 'value'],
-              encode: {
-                x: 'timestamp',
-                y: 'value'
-              },
-              data: datelist
-            };
-          }
+        let datelist = item.metrics.map((dataitem)=>{
+          return dataitem.value;
         })
+        self.legendData.push(item.name);
+        if(item.settings.type == "area"){
+          return {
+            type: 'line',
+            areaStyle: {
+              opacity: 0.65,
+            },
+            name: item.name,
+            yAxisIndex: index,
+            showSymbol: false,
+            smooth: false,
+            itemStyle: {
+              color: item.settings.color
+            },
+            lineStyle: {
+              cap: 'round'
+            },
+            emphasis: {
+              focus: 'series'
+            },
+            dimentions: ['timestamp', 'name', 'value'],
+            encode: {
+              x: 'timestamp',
+              y: 'value'
+            },
+            data: datelist
+          };
+        }else{
+          return {
+            type: 'line',
+            areaStyle: {
+              opacity: 0,
+            },
+            name: item.name,
+            yAxisIndex: index,
+            showSymbol: true,
+            smooth: true,
+            itemStyle: {
+              color: item.settings.color
+            },
+            dimentions: ['timestamp', 'name', 'value'],
+            encode: {
+              x: 'timestamp',
+              y: 'value'
+            },
+            data: datelist
+          };
+        }
+      })
     },
-    updateDatas(){
-      console.log(this.options);
-    }
   },
 }
 </script>
@@ -301,7 +329,47 @@ export default {
   position: relative;
   width: 100%;
   height: 30px;
-  margin-bottom: -30px;
+  margin-bottom: 0px;
   text-align: start;
+}
+.controllSpan{
+  margin: 3px 6px;
+  border-bottom: 1px solid;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+.selectStyle {
+  border: none;
+  font-size: 15px;
+}
+.selectLayerColor{
+  width: 25px;
+  height: 20px;
+}
+.selectInterval{
+  border: none;
+  font-size: 15px;
+}
+.selectShowAxis{
+    width: 14px;
+    height: 14px;
+    margin: 0 3px !important;
+    padding: 0 !important;
+}
+.seriesButton{
+  padding: 10px;
+  border-radius: 5px;
+  margin: 3px;
+  user-select: none;
+  border: 1px solid #000;
+  width: auto;
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+.icon{
+   width: 24px;
 }
 </style>
